@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE = 'sid703/url-shortner'  // Replace with your Docker Hub username and image name
+        DOCKER_CREDENTIALS = 'dockerhub_id'           // Replace with the Jenkins Docker Hub credentials ID
+    }
+    
+    stages {
+        stage('Clone Repository') {
+            steps {
+                // Clone the GitHub repository containing the Node.js app, Dockerfile, and Jenkinsfile
+                git 'https://github.com/sid200307/urlShortner.git' // Replace with your GitHub repository URL
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build the Docker image using the Dockerfile
+                    sh "docker build -t ${DOCKER_IMAGE} ."
+                }
+            }
+        }
+        
+        stage('Login to Docker Hub') {
+            steps {
+                script {
+                    // Login to Docker Hub
+                    docker.withRegistry('', DOCKER_CREDENTIALS) {
+                        echo "Logged in to Docker Hub"
+                    }
+                }
+            }
+        }
+        
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    // Push the Docker image to Docker Hub
+                    docker.withRegistry('', DOCKER_CREDENTIALS) {
+                        sh "docker push ${DOCKER_IMAGE}"
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs()  // Clean workspace after the pipeline is complete
+        }
+    }
+}
